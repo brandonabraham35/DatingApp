@@ -17,7 +17,16 @@ class MessageTest extends TestCase
     {
         Event::fake();
 
-        $sender = User::factory()->create();
+        $sender = User::factory()->create(['role' => 'seeker']);
+        // Need to give sender a subscription to bypass EnsureUserIsSubscribed middleware
+        $sender->subscriptions()->create([
+            'type' => 'premium',
+            'stripe_id' => 'sub_123',
+            'stripe_status' => 'active',
+            'stripe_price' => 'price_123',
+            'quantity' => 1,
+        ]);
+
         $receiver = User::factory()->create();
 
         UserMatch::create([
