@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\MatchController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\BillingController;
+use App\Http\Controllers\Api\DiscoveryController;
 use App\Http\Middleware\EnsureUserIsSubscribed;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -20,6 +21,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
+
+    Route::get('/discover', [DiscoveryController::class, 'index']);
 
     Route::get('/matches', [MatchController::class, 'index']);
     Route::post('/matches', [MatchController::class, 'store']);

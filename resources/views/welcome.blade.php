@@ -81,6 +81,22 @@
                 </div>
             </div>
         </div>
+
+        <section id="authenticated-dashboard" class="hidden w-full max-w-6xl px-4 pb-10" aria-labelledby="discovery-heading">
+            <div class="rounded-3xl bg-white p-5 shadow-xl sm:p-8">
+                <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p class="text-sm font-semibold uppercase tracking-widest text-pink-500">Discover</p>
+                        <h2 id="discovery-heading" class="mt-1 text-2xl font-bold text-gray-900 sm:text-3xl">People you may like</h2>
+                    </div>
+                    <p class="text-sm text-gray-500">Fresh profiles, chosen for you.</p>
+                </div>
+
+                <div id="discovery-feed" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-live="polite">
+                    <div class="rounded-2xl border border-gray-100 bg-gray-50 p-6 text-center text-sm text-gray-500">Finding profiles near you…</div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <script>
@@ -119,6 +135,155 @@
                     chatInput.value = '';
                 }
             });
+
+            const dashboard = document.getElementById('authenticated-dashboard');
+            const discoveryFeed = document.getElementById('discovery-feed');
+
+            const sanitisedToken = [
+                localStorage.getItem('access_token'),
+                localStorage.getItem('auth_token'),
+                localStorage.getItem('sanctum_token'),
+            ].find(Boolean);
+
+            const calculateAge = (birthDate) => {
+                if (!birthDate) {
+                    return null;
+                }
+
+                const birthday = new Date(birthDate);
+
+                if (Number.isNaN(birthday.getTime())) {
+                    return null;
+                }
+
+                const today = new Date();
+                let age = today.getFullYear() - birthday.getFullYear();
+                const hasNotHadBirthday =
+                    today.getMonth() < birthday.getMonth()
+                    || (today.getMonth() === birthday.getMonth() && today.getDate() < birthday.getDate());
+
+                return hasNotHadBirthday ? age - 1 : age;
+            };
+
+            const createActionButton = (label, classes, profile, action) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${classes}`;
+                button.textContent = label;
+                button.addEventListener('click', () => {
+                    // Match actions will be connected to the match API in a follow-up feature.
+                    console.info(`${action} selected for profile`, profile.id);
+                });
+
+                return button;
+            };
+
+            const profileCard = (profile) => {
+                const card = document.createElement('article');
+                card.className = 'flex min-h-72 flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg';
+
+                const header = document.createElement('div');
+                header.className = 'flex items-start justify-between gap-3';
+
+                const profileDetails = document.createElement('div');
+                const name = document.createElement('h3');
+                name.className = 'text-xl font-bold text-gray-900';
+                const age = calculateAge(profile.birth_date);
+                name.textContent = age === null ? profile.username : `${profile.username}, ${age}`;
+                profileDetails.appendChild(name);
+
+                if (profile.is_verified) {
+                    const verified = document.createElement('span');
+                    verified.className = 'mt-2 inline-flex items-center rounded-full bg-pink-100 px-2.5 py-1 text-xs font-bold text-pink-700';
+                    verified.textContent = 'Verified';
+                    profileDetails.appendChild(verified);
+                }
+
+                header.appendChild(profileDetails);
+                card.appendChild(header);
+
+                const bio = document.createElement('p');
+                bio.className = 'mt-5 flex-1 text-sm leading-6 text-gray-600';
+                bio.textContent = profile.bio || 'No bio yet — say hello to learn more.';
+                card.appendChild(bio);
+
+                const location = document.createElement('p');
+                location.className = 'mt-4 text-sm font-medium text-gray-500';
+                location.textContent = profile.location ? `📍 ${profile.location}` : '📍 Location not shared';
+                card.appendChild(location);
+
+                const actions = document.createElement('div');
+                actions.className = 'mt-5 flex gap-3';
+                actions.appendChild(createActionButton('Pass', 'border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300', profile, 'Pass'));
+                actions.appendChild(createActionButton('Like', 'bg-pink-500 text-white hover:bg-pink-600 focus:ring-pink-400', profile, 'Like'));
+                card.appendChild(actions);
+
+                return card;
+            };
+
+            const renderEmptyState = () => {
+                discoveryFeed.replaceChildren();
+                const emptyState = document.createElement('div');
+                emptyState.className = 'col-span-full rounded-2xl border border-dashed border-pink-200 bg-pink-50 px-6 py-12 text-center';
+                emptyState.textContent = "You've explored everyone nearby! Check back later.";
+                discoveryFeed.appendChild(emptyState);
+            };
+
+            const loadDiscovery = async (url = '/api/discover') => {
+                const headers = { Accept: 'application/json' };
+
+                if (sanitisedToken) {
+                    headers.Authorization = `Bearer ${sanitisedToken}`;
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        headers,
+                        credentials: 'same-origin',
+                    });
+
+                    if (response.status === 401) {
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`Discovery request failed with status ${response.status}`);
+                    }
+
+                    const payload = await response.json();
+                    const profiles = Array.isArray(payload.data) ? payload.data : [];
+
+                    dashboard.classList.remove('hidden');
+                    discoveryFeed.replaceChildren();
+
+                    if (profiles.length === 0) {
+                        renderEmptyState();
+                        return;
+                    }
+
+                    profiles.forEach((profile) => discoveryFeed.appendChild(profileCard(profile)));
+
+                    if (payload.links?.next) {
+                        const loadMore = document.createElement('button');
+                        loadMore.type = 'button';
+                        loadMore.className = 'col-span-full rounded-xl border border-pink-200 bg-white px-4 py-3 text-sm font-semibold text-pink-600 transition hover:bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2';
+                        loadMore.textContent = 'Load more profiles';
+                        loadMore.addEventListener('click', () => loadDiscovery(payload.links.next));
+                        discoveryFeed.appendChild(loadMore);
+                    }
+                } catch (error) {
+                    console.error('Unable to load discovery profiles.', error);
+                    dashboard.classList.remove('hidden');
+                    discoveryFeed.replaceChildren();
+
+                    const failure = document.createElement('div');
+                    failure.className = 'col-span-full rounded-2xl border border-red-100 bg-red-50 px-6 py-8 text-center text-sm text-red-700';
+                    failure.textContent = 'We could not load discovery right now. Please try again shortly.';
+                    discoveryFeed.appendChild(failure);
+                }
+            };
+
+            loadDiscovery();
         });
 
         // Register Service Worker for PWA
