@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 use App\Models\UserMatch;
+use App\Models\User;
+use App\Http\Resources\UserResource;
 
 class MatchController extends Controller
 {
@@ -69,10 +71,35 @@ class MatchController extends Controller
 
     public function index(Request $request)
     {
-        $matches = UserMatch::where('user_one_id', $request->user()->id)
-            ->orWhere('user_two_id', $request->user()->id)
+        $userId = $request->user()->id;
+        $matches = UserMatch::where('user_one_id', $userId)
+            ->orWhere('user_two_id', $userId)
+            ->latest()
             ->get();
 
-        return response()->json($matches);
+        $counterparts = User::query()
+            ->whereIn('id', $matches->map(fn (UserMatch $match) =>
+                (int) $match->user_one_id === (int) $userId ? $match->user_two_id : $match->user_one_id
+            )->unique()->values())
+            ->get()
+            ->keyBy('id');
+
+        // Keep the original array response and match attributes intact. `counterpart`
+        // is an additive, safe profile projection for clients that need to restore a
+        // connection list after a new session.
+        $payload = $matches->map(function (UserMatch $match) use ($counterparts, $userId) {
+            $counterpartId = (int) $match->user_one_id === (int) $userId
+                ? $match->user_two_id
+                : $match->user_one_id;
+
+            return [
+                ...$match->toArray(),
+                'counterpart' => isset($counterparts[$counterpartId])
+                    ? (new UserResource($counterparts[$counterpartId]))->resolve()
+                    : null,
+            ];
+        });
+
+        return response()->json($payload);
     }
 }

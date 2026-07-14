@@ -37,10 +37,17 @@ class DiscoveryController extends Controller
                             });
                     });
             })
-            ->orderByDesc('is_verified')
+            // Rank with only data already maintained by the application. This keeps the
+            // discovery contract intact while favoring relevant, trustworthy, complete,
+            // and recently active profiles.
             ->when($user->location, function ($query, $location) {
                 $query->orderByRaw('CASE WHEN location = ? THEN 1 ELSE 0 END DESC', [$location]);
             })
+            ->orderByDesc('is_verified')
+            ->orderByRaw('CASE WHEN profile_photo_path IS NOT NULL THEN 1 ELSE 0 END DESC')
+            ->orderByRaw("CASE WHEN bio IS NOT NULL AND TRIM(bio) <> '' THEN 1 ELSE 0 END DESC")
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
             ->paginate(15);
 
         return UserResource::collection($profiles);

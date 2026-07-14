@@ -58,7 +58,10 @@
                             <p class="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Discovery deck</p>
                             <h2 class="mt-1 text-2xl font-bold">Made for tonight</h2>
                         </div>
-                        <span id="discovery-status" class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">Live</span>
+                        <div class="flex items-center gap-2">
+                            <span id="discovery-status" class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">Live</span>
+                            <button id="refresh-discovery" type="button" class="tap-target rounded-xl border border-slate-700 bg-slate-900 px-3 text-xs font-bold text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-100 focus:outline-none focus:ring-2 focus:ring-cyan-200">Refresh</button>
+                        </div>
                     </div>
                     <div id="discovery-stage" class="relative flex flex-1 items-center justify-center" aria-live="polite">
                         <p class="rounded-2xl border border-slate-800/50 bg-slate-900 px-6 py-8 text-center text-sm text-slate-400">Sign in to start discovering.</p>
@@ -93,12 +96,22 @@
             </section>
 
             <section id="profile-view" class="hidden h-full overflow-y-auto px-5 py-6" data-view="profile">
-                <div id="account-settings" class="rounded-3xl border border-slate-800/50 bg-slate-900 p-5 shadow-xl shadow-black/30">
+                <div id="account-settings" class="overflow-hidden rounded-3xl border border-slate-800/50 bg-slate-900 shadow-xl shadow-black/30">
+                    <div class="relative h-28 bg-[radial-gradient(circle_at_75%_15%,rgba(34,211,238,.45),transparent_28%),linear-gradient(135deg,#172554,#0f172a_65%,#064e3b)]">
+                        <span id="profile-avatar" class="absolute -bottom-9 left-5 flex h-20 w-20 items-center justify-center rounded-[1.5rem] border-4 border-slate-900 bg-slate-800 text-2xl font-black text-cyan-100 shadow-xl">Y</span>
+                    </div>
+                    <div class="p-5 pt-12">
                     <p class="text-xs font-bold uppercase tracking-[.2em] text-emerald-400">My profile</p>
                     <h2 id="profile-name" class="mt-2 text-2xl font-bold">Your Midnight profile</h2>
                     <p id="profile-location" class="mt-2 text-sm text-slate-400">Manage your discovery profile and preferences.</p>
+                    <div class="mt-5 grid grid-cols-3 divide-x divide-slate-800 rounded-2xl border border-slate-800 bg-slate-950/60 py-3 text-center">
+                        <div><p id="profile-completion" class="font-bold text-cyan-200">0%</p><p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Complete</p></div>
+                        <div><p id="profile-match-count" class="font-bold text-cyan-200">0</p><p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Matches</p></div>
+                        <div><p class="font-bold text-emerald-300">Live</p><p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Status</p></div>
+                    </div>
                     <button id="edit-profile-button" type="button" class="mt-5 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-300">Edit profile</button>
                     <button id="logout-button" type="button" class="mt-3 w-full rounded-xl border border-red-500/50 px-4 py-3 text-sm font-bold text-red-400 transition hover:bg-red-950/20">Log out</button>
+                    </div>
                 </div>
                 <div id="edit-profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
                     <div class="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl shadow-black/50">
@@ -115,6 +128,20 @@
                             <div>
                                 <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Location</label>
                                 <input type="text" id="profile-location-input" name="location" class="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 outline-none focus:border-blue-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Birth date</label>
+                                    <input type="date" id="profile-birth-date-input" name="birth_date" class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-3 text-sm text-slate-100 outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">Gender</label>
+                                    <input type="text" id="profile-gender-input" name="gender" maxlength="255" placeholder="Optional" class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-3 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-blue-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">About you</label>
+                                <textarea id="profile-bio-input" name="bio" rows="3" maxlength="1000" placeholder="Share a little about yourself" class="w-full resize-none rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-slate-100 outline-none placeholder:text-slate-600 focus:border-blue-500"></textarea>
                             </div>
                             <p id="edit-profile-error" class="hidden text-sm text-red-400" role="alert"></p>
                             <div class="flex space-x-3 pt-2">
@@ -169,6 +196,7 @@
             const navTabs = document.querySelectorAll('.nav-tab');
             const stage = document.getElementById('discovery-stage');
             const status = document.getElementById('discovery-status');
+            const refreshDiscoveryButton = document.getElementById('refresh-discovery');
             const overlay = document.getElementById('match-overlay');
             const activeMatchesList = document.getElementById('active-matches-list');
             const messagesList = document.getElementById('messages-list');
@@ -193,17 +221,36 @@
             let currentUser = null;
             let activeMatch = null;
             let realtimeUserId = null;
+            let draftSaveTimer = null;
             const matches = [];
 
-            const headers = (json = false) => {
-                const result = { Accept: 'application/json' };
-                if (json) result['Content-Type'] = 'application/json';
-                if (token) result.Authorization = `Bearer ${token}`;
-                return result;
+            const haptic = (pattern = 10) => navigator.vibrate?.(pattern);
+            const toast = (message, tone = 'info') => {
+                const notice = document.createElement('div');
+                notice.className = `motion-enter fixed left-1/2 top-5 z-[60] -translate-x-1/2 rounded-2xl border px-4 py-3 text-sm font-semibold shadow-2xl ${tone === 'success' ? 'border-emerald-400/30 bg-emerald-950 text-emerald-100' : 'border-cyan-300/30 bg-slate-900 text-slate-100'}`;
+                notice.setAttribute('role', 'status');
+                notice.textContent = message;
+                document.body.appendChild(notice);
+                window.setTimeout(() => notice.remove(), 2800);
             };
 
+            const prefetchProfileMedia = (profiles) => profiles.slice(0, 3).forEach((profile) => {
+                if (!profile.profile_photo_url) return;
+                const image = new Image();
+                image.src = profile.profile_photo_url;
+            });
+
+            const headers = (json = false) => window.NicheApi.headers({ json });
+
             const showView = (name) => {
-                Object.entries(views).forEach(([key, view]) => view.classList.toggle('hidden', key !== name));
+                Object.entries(views).forEach(([key, view]) => {
+                    const active = key === name;
+                    view.classList.toggle('hidden', !active);
+                    if (active) {
+                        view.classList.remove('motion-enter');
+                        requestAnimationFrame(() => view.classList.add('motion-enter'));
+                    }
+                });
                 navTabs.forEach((tab) => {
                     const active = tab.dataset.tab === name;
                     tab.classList.toggle('text-cyan-300', active);
@@ -223,12 +270,29 @@
                 return age;
             };
 
-            const emptyDeck = (message) => {
+            const emptyDeck = (message, retryable = false) => {
                 stage.replaceChildren();
-                const state = document.createElement('p');
-                state.className = 'rounded-2xl border border-dashed border-cyan-300/25 bg-slate-900 px-6 py-8 text-center text-sm leading-6 text-slate-400';
-                state.textContent = message;
+                const state = document.createElement('div');
+                state.className = 'motion-enter rounded-2xl border border-dashed border-cyan-300/25 bg-slate-900 px-6 py-8 text-center text-sm leading-6 text-slate-400';
+                const copy = document.createElement('p');
+                copy.textContent = message;
+                state.appendChild(copy);
+                if (retryable) {
+                    const retry = document.createElement('button');
+                    retry.type = 'button';
+                    retry.className = 'mt-4 rounded-xl border border-cyan-300/30 px-4 py-2 font-semibold text-cyan-100 transition hover:bg-cyan-300/10 focus:outline-none focus:ring-2 focus:ring-cyan-200';
+                    retry.textContent = 'Try again';
+                    retry.addEventListener('click', () => fetchDiscovery('/api/discover', true));
+                    state.appendChild(retry);
+                }
                 stage.appendChild(state);
+            };
+
+            const loadingDeck = () => {
+                stage.replaceChildren();
+                const card = document.createElement('div');
+                card.className = 'skeleton aspect-[3/4] w-full max-w-sm rounded-[2rem]';
+                stage.appendChild(card);
             };
 
             const photoSlots = [
@@ -256,6 +320,9 @@
                 card.style.touchAction = 'none';
                 const media = document.createElement('div');
                 media.className = 'absolute inset-0 transition-[background] duration-300';
+                const intent = document.createElement('div');
+                intent.className = 'pointer-events-none absolute inset-x-5 top-16 z-10 flex justify-between text-xs font-black uppercase tracking-[.24em] opacity-0 transition-opacity duration-100';
+                intent.innerHTML = '<span class="rounded-lg border-2 border-rose-300 px-2 py-1 text-rose-200">Pass</span><span class="rounded-lg border-2 border-emerald-300 px-2 py-1 text-emerald-200">Connect</span>';
                 const dashes = document.createElement('div');
                 dashes.className = 'absolute inset-x-4 top-4 z-10 flex gap-1';
                 const content = document.createElement('div');
@@ -279,7 +346,7 @@
                 location.className = 'mt-3 text-sm font-medium text-slate-400';
                 location.textContent = profile.location ? `⌖ ${profile.location}` : '⌖ Location not shared';
                 content.appendChild(location);
-                card.append(media, dashes, content);
+                card.append(media, dashes, intent, content);
                 const actions = document.createElement('div');
                 actions.className = 'mt-5 flex justify-center gap-8';
                 const makeAction = (label, symbol, classes, outcome, direction) => {
@@ -295,7 +362,7 @@
                 stage.appendChild(wrapper);
 
                 const updateMedia = () => {
-                    const photos = Array.isArray(profile.photos) && profile.photos.length ? profile.photos : null;
+                    const photos = Array.isArray(profile.photos) && profile.photos.length ? profile.photos : (profile.profile_photo_url ? [profile.profile_photo_url] : null);
                     const slotCount = photos ? photos.length : photoSlots.length;
                     photoIndex = (photoIndex + slotCount) % slotCount;
                     media.style.background = photos ? `center / cover no-repeat url("${photos[photoIndex]}")` : photoSlots[photoIndex];
@@ -314,18 +381,21 @@
                     card.style.transition = 'transform 260ms cubic-bezier(.2,.9,.2,1), opacity 260ms ease-out';
                     card.style.transform = `translateX(${direction * 140}vw) rotate(${direction * 28}deg)`;
                     card.style.opacity = '0';
+                    haptic(outcome === 'accepted' ? [12, 35, 12] : 8);
                     window.setTimeout(async () => {
                         try {
                             const response = await fetch('/api/matches', { method: 'POST', headers: headers(true), credentials: 'same-origin', body: JSON.stringify({ user_two_id: profile.id, status: outcome }) });
                             const result = await response.json();
                             if (!response.ok) throw new Error(result.message || 'Unable to save your swipe.');
                             queue.shift();
+                            toast(outcome === 'accepted' ? 'Connection saved' : 'Passed for now', outcome === 'accepted' ? 'success' : 'info');
                             if (queue.length < 3) loadNextPage();
                             renderCard();
                             if (result.mutual_match === true) openMatchOverlay(profile);
                         } catch (error) {
                             console.error('Unable to save swipe.', error);
                             card.dataset.swiping = 'false'; card.style.opacity = '1'; resetCard();
+                            toast('Could not save that action. Please try again.');
                         }
                     }, 180);
                 };
@@ -334,6 +404,7 @@
                     deltaX = clientX - startX; moved ||= Math.abs(deltaX) > 8;
                     card.style.transition = 'none';
                     card.style.transform = `translateX(${deltaX}px) rotate(${deltaX / 18}deg)`;
+                    intent.style.opacity = Math.min(Math.abs(deltaX) / 90, 1).toString();
                 };
                 const dragEnd = (clientX) => {
                     if (!dragging) return;
@@ -341,6 +412,7 @@
                     if (Math.abs(deltaX) > 120) flyAway(deltaX > 0 ? 'accepted' : 'declined', deltaX > 0 ? 1 : -1);
                     else if (!moved) { const rect = card.getBoundingClientRect(); photoIndex += clientX < rect.left + rect.width / 2 ? -1 : 1; updateMedia(); resetCard(); }
                     else resetCard();
+                    intent.style.opacity = '0';
                 };
                 card.addEventListener('mousedown', (event) => { dragging = true; moved = false; startX = event.clientX; });
                 card.addEventListener('mousemove', (event) => dragMove(event.clientX));
@@ -355,21 +427,31 @@
             const fetchDiscovery = async (url = '/api/discover', replace = false) => {
                 if (!token || fetching) return;
                 fetching = true;
+                if (replace && !queue.length) loadingDeck();
                 try {
                     const response = await fetch(url, { headers: headers(), credentials: 'same-origin' });
                     if (!response.ok) throw new Error(`Discovery request failed: ${response.status}`);
                     const payload = await response.json();
                     const received = Array.isArray(payload.data) ? payload.data : [];
                     queue = replace ? received : [...queue, ...received];
+                    prefetchProfileMedia(queue.slice(1));
                     nextPage = payload.links?.next ?? null;
                     status.textContent = 'Live';
                     renderCard();
                 } catch (error) {
                     console.error('Unable to load discovery.', error);
-                    emptyDeck('Discovery is unavailable right now. Please try again shortly.');
+                    status.textContent = 'Offline';
+                    emptyDeck('Discovery is unavailable right now. Please try again shortly.', true);
                 } finally { fetching = false; }
             };
             const loadNextPage = () => { if (nextPage && !fetching) fetchDiscovery(nextPage); };
+            refreshDiscoveryButton.addEventListener('click', () => {
+                refreshDiscoveryButton.disabled = true;
+                status.textContent = 'Refreshing';
+                Promise.resolve(fetchDiscovery('/api/discover', true)).finally(() => { refreshDiscoveryButton.disabled = false; });
+            });
+            window.addEventListener('online', () => { status.textContent = 'Live'; toast('Back online.'); });
+            window.addEventListener('offline', () => { status.textContent = 'Offline'; toast('You are offline. Existing content is still available.'); });
 
             const renderActiveMatches = () => {
                 activeMatchesList.replaceChildren();
@@ -386,14 +468,45 @@
             const appendMessage = (message, outgoing) => {
                 const bubble = document.createElement('div');
                 bubble.className = `max-w-[85%] rounded-xl p-3 ${outgoing ? 'ml-auto bg-cyan-300/10 text-right text-cyan-100' : 'bg-slate-800 text-slate-200'}`;
-                bubble.textContent = message.message;
+                const copy = document.createElement('p');
+                copy.textContent = message.message;
+                bubble.appendChild(copy);
+                if (message.pending) {
+                    const state = document.createElement('p');
+                    state.className = 'mt-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-200/60';
+                    state.textContent = 'Sending';
+                    bubble.appendChild(state);
+                }
                 messagesList.appendChild(bubble); messagesList.scrollTop = messagesList.scrollHeight;
+                return bubble;
+            };
+            const draftKey = (matchId) => `niche-draft:${currentUser?.id ?? 'guest'}:${matchId}`;
+            const mutualKey = () => `niche-mutual:${currentUser?.id ?? 'guest'}`;
+            const rememberedMutualIds = () => {
+                try { return new Set(JSON.parse(localStorage.getItem(mutualKey()) ?? '[]')); }
+                catch { return new Set(); }
+            };
+            const rememberMutual = (profile) => {
+                const ids = rememberedMutualIds();
+                ids.add(profile.id);
+                localStorage.setItem(mutualKey(), JSON.stringify([...ids]));
+            };
+            const saveDraft = () => {
+                if (!activeMatch) return;
+                localStorage.setItem(draftKey(activeMatch.id), chatInput.value);
+            };
+            const markAsRead = async (message) => {
+                if (!message?.id || message.sender_id === currentUser?.id || message.read_at) return;
+                try {
+                    await fetch(`/api/messages/${message.id}/read`, { method: 'POST', headers: headers(), credentials: 'same-origin' });
+                } catch (error) { console.error('Unable to mark message as read.', error); }
             };
             const selectMatch = async (profile) => {
                 activeMatch = profile;
                 activeChatName.textContent = profile.username;
                 activeChatAvatar.textContent = profile.username.charAt(0).toUpperCase();
                 renderActiveMatches(); messagesList.replaceChildren();
+                chatInput.value = localStorage.getItem(draftKey(profile.id)) ?? '';
                 try {
                     const response = await fetch(`/api/messages/${profile.id}`, { headers: headers(), credentials: 'same-origin' });
                     if (!response.ok) return;
@@ -407,15 +520,21 @@
                         messagesList.appendChild(starter);
                         return;
                     }
-                    messages.forEach((message) => appendMessage(message, message.sender_id === currentUser?.id));
+                    messages.forEach((message) => {
+                        appendMessage(message, message.sender_id === currentUser?.id);
+                        markAsRead(message);
+                    });
                 } catch (error) { console.error('Unable to load conversation.', error); }
             };
             const openMatchOverlay = (profile) => {
+                if (currentUser) rememberMutual(profile);
                 if (!matches.some((match) => match.id === profile.id)) matches.push(profile);
+                document.getElementById('profile-match-count').textContent = String(matches.length);
                 selectMatch(profile);
                 document.getElementById('matched-avatar').textContent = profile.username.charAt(0).toUpperCase();
                 document.getElementById('matched-name').textContent = profile.username;
                 overlay.classList.remove('hidden'); overlay.classList.add('flex');
+                haptic([18, 45, 18]);
             };
             document.getElementById('send-message-handoff').addEventListener('click', () => {
                 overlay.classList.add('hidden'); overlay.classList.remove('flex'); showView('matches');
@@ -425,11 +544,26 @@
             sendButton.addEventListener('click', async () => {
                 const message = chatInput.value.trim(); if (!message || !activeMatch) return;
                 sendButton.disabled = true;
+                const target = activeMatch;
+                const pendingBubble = appendMessage({ message, pending: true }, true);
+                chatInput.value = '';
+                localStorage.removeItem(draftKey(target.id));
                 try {
-                    const response = await fetch('/api/messages', { method: 'POST', headers: headers(true), credentials: 'same-origin', body: JSON.stringify({ receiver_id: activeMatch.id, message }) });
+                    const response = await fetch('/api/messages', { method: 'POST', headers: headers(true), credentials: 'same-origin', body: JSON.stringify({ receiver_id: target.id, message }) });
                     const payload = await response.json(); if (!response.ok) throw new Error(payload.message || 'Unable to send message.');
-                    appendMessage(payload.data ?? payload, true); chatInput.value = '';
-                } catch (error) { console.error('Unable to send message.', error); } finally { sendButton.disabled = false; }
+                    pendingBubble.remove();
+                    appendMessage(payload.data ?? payload, true);
+                } catch (error) {
+                    pendingBubble.remove();
+                    chatInput.value = message;
+                    saveDraft();
+                    toast('Message was not sent. Your draft is saved.');
+                    console.error('Unable to send message.', error);
+                } finally { sendButton.disabled = false; }
+            });
+            chatInput.addEventListener('input', () => {
+                window.clearTimeout(draftSaveTimer);
+                draftSaveTimer = window.setTimeout(saveDraft, 250);
             });
 
             const subscribeToReverb = (userId) => {
@@ -437,7 +571,13 @@
                 if (!window.Echo) { window.setTimeout(() => subscribeToReverb(userId), 150); return; }
                 realtimeUserId = userId;
                 window.Echo.private(`chat.${userId}`).listen('MessageSent', (message) => {
-                    if (activeMatch && (message.sender_id === activeMatch.id || message.receiver_id === activeMatch.id)) appendMessage(message, message.sender_id === currentUser?.id);
+                    if (activeMatch && (message.sender_id === activeMatch.id || message.receiver_id === activeMatch.id)) {
+                        appendMessage(message, message.sender_id === currentUser?.id);
+                        markAsRead(message);
+                    } else if (message.receiver_id === currentUser?.id) {
+                        toast('You have a new message.', 'success');
+                        haptic([8, 25, 8]);
+                    }
                 });
             };
             const updateProfileSummary = (user) => {
@@ -445,6 +585,23 @@
                 document.getElementById('profile-name').textContent = currentUser.username;
                 document.getElementById('profile-location').textContent = currentUser.location || 'Location not shared';
                 document.getElementById('current-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
+                const profileAvatar = document.getElementById('profile-avatar');
+                profileAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
+                if (currentUser.profile_photo_url) {
+                    profileAvatar.style.backgroundImage = `url("${currentUser.profile_photo_url}")`;
+                    profileAvatar.style.backgroundPosition = 'center';
+                    profileAvatar.style.backgroundSize = 'cover';
+                    profileAvatar.style.color = 'transparent';
+                } else {
+                    profileAvatar.style.backgroundImage = '';
+                    profileAvatar.style.backgroundPosition = '';
+                    profileAvatar.style.backgroundSize = '';
+                    profileAvatar.style.color = '';
+                }
+                const profileFields = ['username', 'location', 'bio', 'birth_date', 'gender', 'profile_photo_url'];
+                const complete = profileFields.filter((field) => Boolean(currentUser[field])).length;
+                document.getElementById('profile-completion').textContent = `${Math.round((complete / profileFields.length) * 100)}%`;
+                document.getElementById('profile-match-count').textContent = String(matches.length);
             };
             const loadProfile = async () => {
                 if (!token) return;
@@ -454,7 +611,23 @@
                     const payload = await response.json();
                     updateProfileSummary(payload.data ?? payload);
                     subscribeToReverb(currentUser.id);
+                    loadMatches();
                 } catch (error) { console.error('Unable to load profile.', error); }
+            };
+            const loadMatches = async () => {
+                try {
+                    const response = await fetch('/api/matches', { headers: headers(), credentials: 'same-origin' });
+                    if (!response.ok) return;
+                    const storedMutualIds = rememberedMutualIds();
+                    const records = await response.json();
+                    const restored = (Array.isArray(records) ? records : [])
+                        .filter((record) => record.status === 'accepted' && storedMutualIds.has(record.counterpart?.id))
+                        .map((record) => record.counterpart)
+                        .filter(Boolean);
+                    matches.splice(0, matches.length, ...restored);
+                    renderActiveMatches();
+                    if (currentUser) document.getElementById('profile-match-count').textContent = String(matches.length);
+                } catch (error) { console.error('Unable to restore matches.', error); }
             };
             const showAuthError = (payload, fallback) => {
                 const validationMessage = Object.values(payload?.errors ?? {}).flat()[0];
@@ -526,6 +699,9 @@
             editProfileButton.addEventListener('click', () => {
                 document.getElementById('profile-username-input').value = currentUser?.username ?? '';
                 document.getElementById('profile-location-input').value = currentUser?.location ?? '';
+                document.getElementById('profile-bio-input').value = currentUser?.bio ?? '';
+                document.getElementById('profile-birth-date-input').value = currentUser?.birth_date ?? '';
+                document.getElementById('profile-gender-input').value = currentUser?.gender ?? '';
                 editProfileError.classList.add('hidden');
                 editProfileModal.classList.remove('hidden');
                 editProfileModal.classList.add('flex');
@@ -533,6 +709,17 @@
             closeProfileModal.addEventListener('click', () => {
                 editProfileModal.classList.add('hidden');
                 editProfileModal.classList.remove('flex');
+            });
+            editProfileModal.addEventListener('click', (event) => {
+                if (event.target !== editProfileModal) return;
+                editProfileModal.classList.add('hidden');
+                editProfileModal.classList.remove('flex');
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape' || editProfileModal.classList.contains('hidden')) return;
+                editProfileModal.classList.add('hidden');
+                editProfileModal.classList.remove('flex');
+                editProfileButton.focus();
             });
             editProfileForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
@@ -554,6 +741,8 @@
                     updateProfileSummary(payload.data ?? payload);
                     editProfileModal.classList.add('hidden');
                     editProfileModal.classList.remove('flex');
+                    haptic([10, 30, 10]);
+                    toast('Your profile is up to date.', 'success');
                 } catch (error) {
                     editProfileError.textContent = error.message || 'Unable to save your profile.';
                     editProfileError.classList.remove('hidden');
