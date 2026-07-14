@@ -10,3 +10,7 @@ Route::get('/', function () {
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });
+
+Route::get('/offline', function () {
+    return view('offline');
+});
