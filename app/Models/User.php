@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Cashier\Billable;
+use Carbon\Carbon;
 
 #[Fillable([
     'role',
@@ -76,5 +77,21 @@ class User extends Authenticatable
     public function receivedMessages()
     {
         return $this->hasMany(Message::class, 'receiver_id');
+    }
+
+    /**
+     * Get the user's age dynamically.
+     */
+    public function getAgeAttribute()
+    {
+        return $this->birth_date ? Carbon::parse($this->birth_date)->age : null;
+    }
+
+    /**
+     * Scope a query to filter users by geographic location.
+     */
+    public function scopeLocatedIn($query, $location)
+    {
+        return $query->where('location', $location);
     }
 }

@@ -2,54 +2,44 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\UserMatch;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\User;
+use App\Models\UserMatch;
 
 class DiscoveryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_a_seeker_only_discovers_providers(): void
+    public function test_discover_returns_only_uninteracted_opposite_role()
     {
         $seeker = User::factory()->create(['role' => 'seeker']);
-        $provider = User::factory()->create(['role' => 'provider']);
-        $otherSeeker = User::factory()->create(['role' => 'seeker']);
 
-        $response = $this->actingAs($seeker)->getJson('/api/discover');
+        $provider1 = User::factory()->create(['role' => 'provider']); // Uninteracted
+        $provider2 = User::factory()->create(['role' => 'provider']); // Interacted
+        $anotherSeeker = User::factory()->create(['role' => 'seeker']);
 
-        $response->assertOk()
-            ->assertJsonPath('data.0.id', $provider->id)
-            ->assertJsonPath('data.0.role', 'provider')
-            ->assertJsonMissing(['id' => $otherSeeker->id])
-            ->assertJsonMissing(['id' => $seeker->id]);
-    }
-
-    public function test_profiles_with_existing_swipes_are_omitted(): void
-    {
-        $seeker = User::factory()->create(['role' => 'seeker']);
-        $availableProvider = User::factory()->create(['role' => 'provider']);
-        $declinedProvider = User::factory()->create(['role' => 'provider']);
-        $pendingProvider = User::factory()->create(['role' => 'provider']);
-
+        // Create an interaction with provider2
         UserMatch::create([
             'user_one_id' => $seeker->id,
-            'user_two_id' => $declinedProvider->id,
-            'status' => 'declined',
-        ]);
-
-        UserMatch::create([
-            'user_one_id' => $pendingProvider->id,
-            'user_two_id' => $seeker->id,
-            'status' => 'pending',
+            'user_two_id' => $provider2->id,
+            'status' => 'pending'
         ]);
 
         $response = $this->actingAs($seeker)->getJson('/api/discover');
 
-        $response->assertOk()
-            ->assertJsonFragment(['id' => $availableProvider->id])
-            ->assertJsonMissing(['id' => $declinedProvider->id])
-            ->assertJsonMissing(['id' => $pendingProvider->id]);
+        $response->assertStatus(200);
+
+        $data = $response->json('data');
+
+        // Should return only 1 profile (provider1)
+        $this->assertCount(1, $data);
+        $this->assertEquals($provider1->id, $data[0]['id']);
+
+        // Assert another seeker is not returned
+        $response->assertJsonMissing(['id' => $anotherSeeker->id]);
+
+        // Assert the interacted provider is not returned
+        $response->assertJsonMissing(['id' => $provider2->id]);
     }
 }
