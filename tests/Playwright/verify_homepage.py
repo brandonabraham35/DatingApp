@@ -1,10 +1,10 @@
 from playwright.sync_api import sync_playwright
 
 def run_cuj(page):
-    page.goto("http://localhost:8000")
+    page.goto("http://localhost:3000")
     page.wait_for_timeout(1000)
 
-    # We just want to visually verify the frontend rendering of the homepage
+    # We just want to visually verify the frontend rendering of the homepage and the chat widget
     page.screenshot(path="/home/jules/verification/screenshots/verification.png")
     page.wait_for_timeout(2000)
 
