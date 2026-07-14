@@ -21,6 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile/update', [ProfileController::class, 'update']);
 
     Route::get('/discover', [DiscoveryController::class, 'index']);
 

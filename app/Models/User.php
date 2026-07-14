@@ -22,6 +22,7 @@ use Carbon\Carbon;
     'gender',
     'location',
     'bio',
+    'profile_photo_path',
     'is_verified',
     'is_admin',
 ])]
