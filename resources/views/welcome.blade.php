@@ -99,6 +99,17 @@
         </section>
     </div>
 
+    <div id="match-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 p-4" role="dialog" aria-modal="true" aria-labelledby="match-modal-title">
+        <div class="w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-2xl">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-pink-100 text-3xl" aria-hidden="true">❤</div>
+            <p class="mt-5 text-sm font-semibold uppercase tracking-widest text-pink-500">A new connection</p>
+            <h2 id="match-modal-title" class="mt-2 text-3xl font-bold text-gray-900">It's a Match!</h2>
+            <p id="match-modal-message" class="mt-3 text-sm leading-6 text-gray-600">Start a conversation and see where it goes.</p>
+            <button id="start-chat-button" type="button" class="mt-7 w-full rounded-xl bg-pink-500 px-4 py-3 font-semibold text-white transition hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2">Start chatting</button>
+            <button id="close-match-modal" type="button" class="mt-3 w-full rounded-xl px-4 py-3 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2">Keep discovering</button>
+        </div>
+    </div>
+
     <script>
         // Stub for dynamically displaying messages using Echo and Pusher-js
         document.addEventListener('DOMContentLoaded', () => {
@@ -138,6 +149,12 @@
 
             const dashboard = document.getElementById('authenticated-dashboard');
             const discoveryFeed = document.getElementById('discovery-feed');
+            const matchModal = document.getElementById('match-modal');
+            const matchModalMessage = document.getElementById('match-modal-message');
+            const startChatButton = document.getElementById('start-chat-button');
+            const closeMatchModal = document.getElementById('close-match-modal');
+            let nextDiscoveryPage = null;
+            let isLoadingNextPage = false;
 
             const sanitisedToken = [
                 localStorage.getItem('access_token'),
@@ -165,22 +182,19 @@
                 return hasNotHadBirthday ? age - 1 : age;
             };
 
-            const createActionButton = (label, classes, profile, action) => {
+            const createActionButton = (label, classes, profile, action, card) => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = `flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${classes}`;
                 button.textContent = label;
-                button.addEventListener('click', () => {
-                    // Match actions will be connected to the match API in a follow-up feature.
-                    console.info(`${action} selected for profile`, profile.id);
-                });
+                button.addEventListener('click', () => submitMatchAction(profile, action, card));
 
                 return button;
             };
 
             const profileCard = (profile) => {
                 const card = document.createElement('article');
-                card.className = 'flex min-h-72 flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg';
+                card.className = 'discovery-card flex min-h-72 flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg';
 
                 const header = document.createElement('div');
                 header.className = 'flex items-start justify-between gap-3';
@@ -214,8 +228,8 @@
 
                 const actions = document.createElement('div');
                 actions.className = 'mt-5 flex gap-3';
-                actions.appendChild(createActionButton('Pass', 'border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300', profile, 'Pass'));
-                actions.appendChild(createActionButton('Like', 'bg-pink-500 text-white hover:bg-pink-600 focus:ring-pink-400', profile, 'Like'));
+                actions.appendChild(createActionButton('Pass', 'border border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300', profile, 'declined', card));
+                actions.appendChild(createActionButton('Like', 'bg-pink-500 text-white hover:bg-pink-600 focus:ring-pink-400', profile, 'accepted', card));
                 card.appendChild(actions);
 
                 return card;
@@ -229,7 +243,17 @@
                 discoveryFeed.appendChild(emptyState);
             };
 
-            const loadDiscovery = async (url = '/api/discover') => {
+            const updateDiscoveryDeck = () => {
+                if (discoveryFeed.querySelectorAll('.discovery-card').length === 0 && !isLoadingNextPage) {
+                    renderEmptyState();
+                }
+            };
+
+            const appendDiscoveryProfiles = (profiles) => {
+                profiles.forEach((profile) => discoveryFeed.appendChild(profileCard(profile)));
+            };
+
+            const fetchDiscoveryPage = async (url = '/api/discover', replace = false) => {
                 const headers = { Accept: 'application/json' };
 
                 if (sanitisedToken) {
@@ -254,23 +278,19 @@
                     const profiles = Array.isArray(payload.data) ? payload.data : [];
 
                     dashboard.classList.remove('hidden');
-                    discoveryFeed.replaceChildren();
 
-                    if (profiles.length === 0) {
+                    if (replace) {
+                        discoveryFeed.replaceChildren();
+                    }
+
+                    if (profiles.length === 0 && replace) {
                         renderEmptyState();
                         return;
                     }
 
-                    profiles.forEach((profile) => discoveryFeed.appendChild(profileCard(profile)));
-
-                    if (payload.links?.next) {
-                        const loadMore = document.createElement('button');
-                        loadMore.type = 'button';
-                        loadMore.className = 'col-span-full rounded-xl border border-pink-200 bg-white px-4 py-3 text-sm font-semibold text-pink-600 transition hover:bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2';
-                        loadMore.textContent = 'Load more profiles';
-                        loadMore.addEventListener('click', () => loadDiscovery(payload.links.next));
-                        discoveryFeed.appendChild(loadMore);
-                    }
+                    appendDiscoveryProfiles(profiles);
+                    nextDiscoveryPage = payload.links?.next ?? null;
+                    updateDiscoveryDeck();
                 } catch (error) {
                     console.error('Unable to load discovery profiles.', error);
                     dashboard.classList.remove('hidden');
@@ -283,7 +303,96 @@
                 }
             };
 
-            loadDiscovery();
+            const loadNextDiscoveryPage = async () => {
+                if (!nextDiscoveryPage || isLoadingNextPage) {
+                    return;
+                }
+
+                isLoadingNextPage = true;
+
+                try {
+                    await fetchDiscoveryPage(nextDiscoveryPage);
+                } finally {
+                    isLoadingNextPage = false;
+                    updateDiscoveryDeck();
+                }
+            };
+
+            const removeProfileCard = (card) => {
+                card.classList.add('opacity-0', 'scale-95');
+                window.setTimeout(() => {
+                    card.remove();
+
+                    if (discoveryFeed.querySelectorAll('.discovery-card').length < 3) {
+                        loadNextDiscoveryPage();
+                    }
+
+                    updateDiscoveryDeck();
+                }, 180);
+            };
+
+            const submitMatchAction = async (profile, status, card) => {
+                const buttons = card.querySelectorAll('button');
+                buttons.forEach((button) => {
+                    button.disabled = true;
+                    button.classList.add('cursor-wait', 'opacity-60');
+                });
+
+                const headers = {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                };
+
+                if (sanitisedToken) {
+                    headers.Authorization = `Bearer ${sanitisedToken}`;
+                }
+
+                try {
+                    const response = await fetch('/api/matches', {
+                        method: 'POST',
+                        headers,
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            user_two_id: profile.id,
+                            status,
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Match request failed with status ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    removeProfileCard(card);
+
+                    if (result.mutual_match === true) {
+                        matchModalMessage.textContent = `You and ${profile.username} liked each other. Start the conversation!`;
+                        matchModal.classList.remove('hidden');
+                        matchModal.classList.add('flex');
+                    }
+                } catch (error) {
+                    console.error('Unable to save match action.', error);
+                    buttons.forEach((button) => {
+                        button.disabled = false;
+                        button.classList.remove('cursor-wait', 'opacity-60');
+                    });
+                }
+            };
+
+            closeMatchModal.addEventListener('click', () => {
+                matchModal.classList.add('hidden');
+                matchModal.classList.remove('flex');
+            });
+
+            startChatButton.addEventListener('click', () => {
+                matchModal.classList.add('hidden');
+                matchModal.classList.remove('flex');
+                chatWidget.style.display = 'block';
+                chatWidget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                chatInput.focus();
+            });
+
+            fetchDiscoveryPage('/api/discover', true);
         });
 
         // Register Service Worker for PWA

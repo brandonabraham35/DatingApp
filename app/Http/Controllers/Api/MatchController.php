@@ -14,10 +14,12 @@ class MatchController extends Controller
     {
         $validated = $request->validate([
             'user_two_id' => 'required|exists:users,id',
+            'status' => 'required|in:accepted,declined',
         ]);
 
         $userOneId = $request->user()->id;
         $userTwoId = $validated['user_two_id'];
+        $status = $validated['status'];
 
         if ((int)$userOneId === (int)$userTwoId) {
             throw ValidationException::withMessages([
@@ -25,7 +27,6 @@ class MatchController extends Controller
             ]);
         }
 
-        // Prevent duplicate matching (A matching B when A already matched B, or B already matched A)
         $existingMatch = UserMatch::where(function($q) use ($userOneId, $userTwoId) {
             $q->where('user_one_id', $userOneId)->where('user_two_id', $userTwoId);
         })->orWhere(function($q) use ($userOneId, $userTwoId) {
@@ -33,6 +34,22 @@ class MatchController extends Controller
         })->first();
 
         if ($existingMatch) {
+            $isReciprocalAction = (int) $existingMatch->user_one_id === (int) $userTwoId;
+            $isMutualMatch = $isReciprocalAction
+                && $status === 'accepted'
+                && in_array($existingMatch->status, ['pending', 'accepted'], true);
+
+            if ($isReciprocalAction) {
+                $existingMatch->update([
+                    'status' => $status === 'declined' ? 'declined' : 'accepted',
+                ]);
+
+                return response()->json([
+                    'match' => $existingMatch->fresh(),
+                    'mutual_match' => $isMutualMatch,
+                ]);
+            }
+
             throw ValidationException::withMessages([
                 'user_two_id' => ['A match with this user already exists.'],
             ]);
@@ -41,9 +58,13 @@ class MatchController extends Controller
         $match = UserMatch::create([
             'user_one_id' => $userOneId,
             'user_two_id' => $userTwoId,
+            'status' => $status,
         ]);
 
-        return response()->json($match, 201);
+        return response()->json([
+            'match' => $match,
+            'mutual_match' => false,
+        ], 201);
     }
 
     public function index(Request $request)
