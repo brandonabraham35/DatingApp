@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\UserMatch;
+use App\Models\Message;
 use App\Events\MessageSent;
 
 class MessageTest extends TestCase
@@ -52,5 +53,29 @@ class MessageTest extends TestCase
                    $event->message->receiver_id === $receiver->id &&
                    $event->message->message === 'Hello there!';
         });
+    }
+
+    public function test_message_index_supports_an_opt_in_descending_page_without_changing_default_order(): void
+    {
+        $sender = User::factory()->create(['role' => 'seeker']);
+        $receiver = User::factory()->create(['role' => 'provider']);
+        UserMatch::create([
+            'user_one_id' => $sender->id,
+            'user_two_id' => $receiver->id,
+            'status' => 'accepted',
+        ]);
+
+        $older = Message::create(['sender_id' => $sender->id, 'receiver_id' => $receiver->id, 'message' => 'Older']);
+        $newer = Message::create(['sender_id' => $receiver->id, 'receiver_id' => $sender->id, 'message' => 'Newer']);
+        $older->forceFill(['created_at' => now()->subMinute()])->save();
+        $newer->forceFill(['created_at' => now()])->save();
+
+        $this->actingAs($sender, 'sanctum')->getJson("/api/messages/{$receiver->id}")
+            ->assertOk()
+            ->assertJsonPath('data.0.message', 'Older');
+
+        $this->actingAs($sender, 'sanctum')->getJson("/api/messages/{$receiver->id}?order=desc")
+            ->assertOk()
+            ->assertJsonPath('data.0.message', 'Newer');
     }
 }

@@ -27,11 +27,13 @@ class MessageController extends Controller
             return response()->json(['message' => 'You are not matched with this user.'], 403);
         }
 
+        $direction = $request->query('order') === 'desc' ? 'desc' : 'asc';
+
         $messages = Message::where(function ($q) use ($user, $userId) {
             $q->where('sender_id', $user->id)->where('receiver_id', $userId);
         })->orWhere(function ($q) use ($user, $userId) {
             $q->where('sender_id', $userId)->where('receiver_id', $user->id);
-        })->orderBy('created_at', 'asc')->paginate(50);
+        })->orderBy('created_at', $direction)->paginate(50)->withQueryString();
 
         return MessageResource::collection($messages);
     }

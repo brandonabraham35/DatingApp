@@ -74,13 +74,19 @@
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[.2em] text-emerald-400">Matches & chat</p>
                         <h2 class="mt-1 text-2xl font-bold">Your connections</h2>
+                        <div class="mt-4 flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950 px-3 py-1 focus-within:border-cyan-300/60">
+                            <span class="text-slate-500" aria-hidden="true">⌕</span>
+                            <input id="match-search" type="search" list="match-search-suggestions" autocomplete="off" placeholder="Search connections" class="min-w-0 flex-1 bg-transparent py-2 text-sm text-slate-100 outline-none placeholder:text-slate-600" aria-label="Search connections">
+                            <button id="clear-match-search" type="button" class="hidden rounded-lg px-2 py-1 text-xs font-bold text-cyan-200 hover:bg-cyan-300/10">Clear</button>
+                        </div>
+                        <datalist id="match-search-suggestions"></datalist>
                         <div id="active-matches-list" class="mt-4 flex gap-3 overflow-x-auto pb-3" aria-label="Active matches">
                             <p class="text-sm text-slate-500">New mutual matches appear here.</p>
                         </div>
                     </div>
                     <div id="chat-panel" class="mt-2 flex min-h-0 flex-1 flex-col rounded-3xl border border-slate-800/50 bg-slate-900 p-4 shadow-xl shadow-black/30">
                         <div class="flex items-center gap-3 border-b border-slate-800/70 pb-3">
-                            <span id="active-chat-avatar" class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-cyan-300/70 bg-cyan-300/10 text-sm font-bold text-cyan-100">?</span>
+                            <button id="active-chat-avatar" type="button" class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-cyan-300/70 bg-cyan-300/10 text-sm font-bold text-cyan-100 transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-200" aria-label="View connection profile">?</button>
                             <div>
                                 <p id="active-chat-name" class="font-semibold">Select a match</p>
                                 <p class="text-xs text-emerald-400">Private Reverb chat</p>
@@ -104,6 +110,7 @@
                     <p class="text-xs font-bold uppercase tracking-[.2em] text-emerald-400">My profile</p>
                     <h2 id="profile-name" class="mt-2 text-2xl font-bold">Your Midnight profile</h2>
                     <p id="profile-location" class="mt-2 text-sm text-slate-400">Manage your discovery profile and preferences.</p>
+                    <p id="profile-bio-summary" class="mt-3 text-sm leading-6 text-slate-300">Add a few details to make discovery more personal.</p>
                     <div class="mt-5 grid grid-cols-3 divide-x divide-slate-800 rounded-2xl border border-slate-800 bg-slate-950/60 py-3 text-center">
                         <div><p id="profile-completion" class="font-bold text-cyan-200">0%</p><p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Complete</p></div>
                         <div><p id="profile-match-count" class="font-bold text-cyan-200">0</p><p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Matches</p></div>
@@ -113,6 +120,16 @@
                     <button id="logout-button" type="button" class="mt-3 w-full rounded-xl border border-red-500/50 px-4 py-3 text-sm font-bold text-red-400 transition hover:bg-red-950/20">Log out</button>
                     </div>
                 </div>
+                <section class="mt-5 rounded-3xl border border-slate-800/50 bg-slate-900 p-5 shadow-xl shadow-black/20" aria-labelledby="profile-readiness-title">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[.2em] text-cyan-300">Profile signals</p>
+                            <h3 id="profile-readiness-title" class="mt-1 text-lg font-bold">Make every detail count</h3>
+                        </div>
+                        <span id="profile-readiness-badge" class="rounded-full bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-100">In progress</span>
+                    </div>
+                    <ul id="profile-readiness-list" class="mt-4 space-y-3 text-sm text-slate-300"></ul>
+                </section>
                 <div id="edit-profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
                     <div class="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl shadow-black/50">
                         <h3 class="mb-4 text-xl font-bold text-slate-100">Edit Profile</h3>
@@ -161,7 +178,7 @@
             </button>
             <button type="button" data-tab="matches" class="nav-tab flex flex-col items-center gap-1 rounded-xl py-2 text-xs font-semibold text-slate-400 transition hover:text-cyan-300">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75h6.75m-6.75 3h4.5m-6.69 6.082A9.75 9.75 0 1 0 3.75 15.75l-1.5 4.5 4.185-1.395Z" /></svg>
-                Matches
+                <span class="relative">Matches<span id="match-unread-badge" class="absolute -right-3 -top-2 hidden min-w-4 rounded-full bg-emerald-400 px-1 text-[9px] font-black leading-4 text-slate-950" aria-label="Unread messages"></span></span>
             </button>
             <button type="button" data-tab="profile" class="nav-tab flex flex-col items-center gap-1 rounded-xl py-2 text-xs font-semibold text-slate-400 transition hover:text-cyan-300">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.118a7.5 7.5 0 0 1 15 0A17.933 17.933 0 0 1 12 21.75a17.933 17.933 0 0 1-7.5-1.632Z" /></svg>
@@ -183,6 +200,20 @@
         </div>
     </div>
 
+    <div id="connection-sheet" class="fixed inset-0 z-50 hidden items-end bg-slate-950/70 p-0 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="connection-sheet-name">
+        <section class="motion-enter w-full rounded-t-[2rem] border border-slate-700/70 bg-slate-900 p-6 shadow-2xl shadow-black/60">
+            <div class="mx-auto h-1.5 w-12 rounded-full bg-slate-700" aria-hidden="true"></div>
+            <div class="mt-5 flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <span id="connection-sheet-avatar" class="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-300/10 text-xl font-black text-cyan-100">?</span>
+                    <div><h2 id="connection-sheet-name" class="text-xl font-bold">Connection</h2><p id="connection-sheet-location" class="mt-1 text-sm text-slate-400">Location not shared</p></div>
+                </div>
+                <button id="close-connection-sheet" type="button" class="tap-target rounded-xl border border-slate-700 px-3 text-sm font-bold text-slate-300 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-200">Close</button>
+            </div>
+            <p id="connection-sheet-bio" class="mt-5 rounded-2xl bg-slate-950/70 p-4 text-sm leading-6 text-slate-300">No bio shared yet.</p>
+        </section>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('auth_token');
@@ -199,11 +230,17 @@
             const refreshDiscoveryButton = document.getElementById('refresh-discovery');
             const overlay = document.getElementById('match-overlay');
             const activeMatchesList = document.getElementById('active-matches-list');
+            const matchSearch = document.getElementById('match-search');
+            const clearMatchSearch = document.getElementById('clear-match-search');
+            const matchSearchSuggestions = document.getElementById('match-search-suggestions');
+            const matchUnreadBadge = document.getElementById('match-unread-badge');
             const messagesList = document.getElementById('messages-list');
             const chatInput = document.getElementById('chat-input');
             const sendButton = document.getElementById('send-button');
             const activeChatName = document.getElementById('active-chat-name');
             const activeChatAvatar = document.getElementById('active-chat-avatar');
+            const connectionSheet = document.getElementById('connection-sheet');
+            const closeConnectionSheet = document.getElementById('close-connection-sheet');
             const accountSettings = document.getElementById('account-settings');
             const loginForm = document.getElementById('login-form');
             const registerForm = document.getElementById('register-form');
@@ -222,7 +259,12 @@
             let activeMatch = null;
             let realtimeUserId = null;
             let draftSaveTimer = null;
+            let matchSearchTimer = null;
+            let matchSearchQuery = '';
+            let messageNextPage = null;
+            let loadingOlderMessages = false;
             const matches = [];
+            const unreadMatchIds = new Set();
 
             const haptic = (pattern = 10) => navigator.vibrate?.(pattern);
             const toast = (message, tone = 'info') => {
@@ -233,12 +275,59 @@
                 document.body.appendChild(notice);
                 window.setTimeout(() => notice.remove(), 2800);
             };
+            const updateUnreadIndicator = () => {
+                const count = unreadMatchIds.size;
+                matchUnreadBadge.textContent = count > 9 ? '9+' : String(count);
+                matchUnreadBadge.classList.toggle('hidden', count === 0);
+                document.title = count ? `(${count}) Niche Midnight` : 'Niche Midnight';
+            };
+            const unreadStorageKey = () => `niche-unread:${currentUser?.id ?? 'guest'}`;
+            const persistUnreadMatches = () => {
+                try { sessionStorage.setItem(unreadStorageKey(), JSON.stringify([...unreadMatchIds])); }
+                catch { /* Storage can be unavailable in private browsing. */ }
+            };
+            const restoreUnreadMatches = () => {
+                try {
+                    JSON.parse(sessionStorage.getItem(unreadStorageKey()) ?? '[]').forEach((id) => unreadMatchIds.add(id));
+                } catch { /* Ignore malformed transient storage. */ }
+                updateUnreadIndicator();
+            };
+            const showDeckGuide = () => {
+                if (localStorage.getItem('niche-deck-guide-dismissed')) return;
+                const guide = document.createElement('aside');
+                guide.className = 'motion-enter fixed inset-x-5 bottom-24 z-40 mx-auto max-w-sm rounded-2xl border border-cyan-300/25 bg-slate-900/95 p-4 shadow-2xl shadow-black/50 backdrop-blur';
+                guide.setAttribute('role', 'dialog');
+                guide.setAttribute('aria-label', 'Discovery guide');
+                guide.innerHTML = '<p class="font-bold text-cyan-100">Make discovery yours</p><p class="mt-1 text-sm leading-5 text-slate-300">Swipe right to connect, left to pass, or tap a card to browse photos.</p>';
+                const dismiss = document.createElement('button');
+                dismiss.type = 'button';
+                dismiss.className = 'mt-3 w-full rounded-xl bg-cyan-300 px-3 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 focus:outline-none focus:ring-2 focus:ring-cyan-100';
+                dismiss.textContent = 'Got it';
+                dismiss.addEventListener('click', () => {
+                    localStorage.setItem('niche-deck-guide-dismissed', 'true');
+                    guide.remove();
+                });
+                guide.appendChild(dismiss);
+                document.body.appendChild(guide);
+                dismiss.focus();
+            };
 
             const prefetchProfileMedia = (profiles) => profiles.slice(0, 3).forEach((profile) => {
                 if (!profile.profile_photo_url) return;
                 const image = new Image();
                 image.src = profile.profile_photo_url;
             });
+            const discoveryCacheKey = () => `niche-discovery:${token?.slice(-16) ?? 'guest'}`;
+            const readDiscoveryCache = () => {
+                try {
+                    const cached = JSON.parse(sessionStorage.getItem(discoveryCacheKey()) ?? 'null');
+                    return cached && Date.now() - cached.savedAt < 120000 ? cached.payload : null;
+                } catch { return null; }
+            };
+            const cacheDiscovery = (payload) => {
+                try { sessionStorage.setItem(discoveryCacheKey(), JSON.stringify({ savedAt: Date.now(), payload })); }
+                catch { /* Storage can be unavailable in private browsing. */ }
+            };
 
             const headers = (json = false) => window.NicheApi.headers({ json });
 
@@ -318,6 +407,8 @@
                 const card = document.createElement('article');
                 card.className = 'swipe-card relative aspect-[3/4] w-full cursor-grab select-none overflow-hidden rounded-[2rem] border border-slate-700/70 bg-slate-900 shadow-2xl shadow-black/60 active:cursor-grabbing';
                 card.style.touchAction = 'none';
+                card.tabIndex = 0;
+                card.setAttribute('aria-label', `Profile for ${profile.username}. Use left arrow to pass, right arrow to connect, or space to view the next photo.`);
                 const media = document.createElement('div');
                 media.className = 'absolute inset-0 transition-[background] duration-300';
                 const intent = document.createElement('div');
@@ -421,13 +512,31 @@
                 card.addEventListener('touchstart', (event) => { dragging = true; moved = false; startX = event.touches[0].clientX; }, { passive: true });
                 card.addEventListener('touchmove', (event) => { event.preventDefault(); dragMove(event.touches[0].clientX); }, { passive: false });
                 card.addEventListener('touchend', (event) => dragEnd(event.changedTouches[0].clientX));
+                card.addEventListener('keydown', (event) => {
+                    if (event.key === 'ArrowLeft') { event.preventDefault(); flyAway('declined', -1); }
+                    if (event.key === 'ArrowRight') { event.preventDefault(); flyAway('accepted', 1); }
+                    if (event.key === ' ' || event.key === 'Enter') {
+                        event.preventDefault();
+                        photoIndex += 1;
+                        updateMedia();
+                        haptic(6);
+                    }
+                });
                 updateMedia();
             };
 
             const fetchDiscovery = async (url = '/api/discover', replace = false) => {
                 if (!token || fetching) return;
                 fetching = true;
-                if (replace && !queue.length) loadingDeck();
+                const isInitialPage = replace && url === '/api/discover';
+                const cached = isInitialPage ? readDiscoveryCache() : null;
+                if (cached && !queue.length) {
+                    queue = Array.isArray(cached.data) ? cached.data : [];
+                    nextPage = cached.links?.next ?? null;
+                    prefetchProfileMedia(queue.slice(1));
+                    status.textContent = 'Updated recently';
+                    renderCard();
+                } else if (replace && !queue.length) loadingDeck();
                 try {
                     const response = await fetch(url, { headers: headers(), credentials: 'same-origin' });
                     if (!response.ok) throw new Error(`Discovery request failed: ${response.status}`);
@@ -436,12 +545,19 @@
                     queue = replace ? received : [...queue, ...received];
                     prefetchProfileMedia(queue.slice(1));
                     nextPage = payload.links?.next ?? null;
+                    if (isInitialPage) cacheDiscovery(payload);
                     status.textContent = 'Live';
                     renderCard();
+                    if (received.length) showDeckGuide();
                 } catch (error) {
                     console.error('Unable to load discovery.', error);
-                    status.textContent = 'Offline';
-                    emptyDeck('Discovery is unavailable right now. Please try again shortly.', true);
+                    if (queue.length) {
+                        status.textContent = 'Showing saved results';
+                        toast('Showing recently saved discovery results.');
+                    } else {
+                        status.textContent = 'Offline';
+                        emptyDeck('Discovery is unavailable right now. Please try again shortly.', true);
+                    }
                 } finally { fetching = false; }
             };
             const loadNextPage = () => { if (nextPage && !fetching) fetchDiscovery(nextPage); };
@@ -455,8 +571,10 @@
 
             const renderActiveMatches = () => {
                 activeMatchesList.replaceChildren();
+                const visibleMatches = matches.filter((profile) => profile.username.toLocaleLowerCase().includes(matchSearchQuery));
                 if (!matches.length) { activeMatchesList.innerHTML = '<p class="text-sm text-slate-500">New mutual matches appear here.</p>'; return; }
-                matches.forEach((profile) => {
+                if (!visibleMatches.length) { activeMatchesList.innerHTML = '<p class="text-sm text-slate-500">No connections match that search.</p>'; return; }
+                visibleMatches.forEach((profile) => {
                     const button = document.createElement('button');
                     const selected = activeMatch?.id === profile.id;
                     button.type = 'button'; button.textContent = profile.username;
@@ -465,7 +583,46 @@
                     activeMatchesList.appendChild(button);
                 });
             };
-            const appendMessage = (message, outgoing) => {
+            const matchSearchHistoryKey = () => `niche-match-searches:${currentUser?.id ?? 'guest'}`;
+            const searchHistory = () => {
+                try { return JSON.parse(localStorage.getItem(matchSearchHistoryKey()) ?? '[]'); }
+                catch { return []; }
+            };
+            const renderSearchSuggestions = () => {
+                matchSearchSuggestions.replaceChildren();
+                searchHistory().forEach((query) => {
+                    const suggestion = document.createElement('option');
+                    suggestion.value = query;
+                    matchSearchSuggestions.appendChild(suggestion);
+                });
+            };
+            const rememberMatchSearch = (query) => {
+                if (query.length < 2) return;
+                const previous = searchHistory();
+                const next = [query, ...previous.filter((item) => item !== query)].slice(0, 5);
+                localStorage.setItem(matchSearchHistoryKey(), JSON.stringify(next));
+                renderSearchSuggestions();
+            };
+            matchSearch.addEventListener('focus', renderSearchSuggestions);
+            matchSearch.addEventListener('input', () => {
+                window.clearTimeout(matchSearchTimer);
+                const query = matchSearch.value.trim().toLocaleLowerCase();
+                clearMatchSearch.classList.toggle('hidden', !query);
+                matchSearchTimer = window.setTimeout(() => {
+                    matchSearchQuery = query;
+                    renderActiveMatches();
+                    rememberMatchSearch(query);
+                }, 180);
+            });
+            clearMatchSearch.addEventListener('click', () => {
+                window.clearTimeout(matchSearchTimer);
+                matchSearch.value = '';
+                matchSearchQuery = '';
+                clearMatchSearch.classList.add('hidden');
+                renderActiveMatches();
+                matchSearch.focus();
+            });
+            const appendMessage = (message, outgoing, { scrollToLatest = true } = {}) => {
                 const bubble = document.createElement('div');
                 bubble.className = `max-w-[85%] rounded-xl p-3 ${outgoing ? 'ml-auto bg-cyan-300/10 text-right text-cyan-100' : 'bg-slate-800 text-slate-200'}`;
                 const copy = document.createElement('p');
@@ -476,8 +633,17 @@
                     state.className = 'mt-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-200/60';
                     state.textContent = 'Sending';
                     bubble.appendChild(state);
+                } else if (message.created_at) {
+                    const createdAt = new Date(message.created_at);
+                    if (!Number.isNaN(createdAt.getTime())) {
+                        const timestamp = document.createElement('p');
+                        timestamp.className = `mt-1 text-[10px] font-medium ${outgoing ? 'text-cyan-200/60' : 'text-slate-500'}`;
+                        timestamp.textContent = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(createdAt);
+                        bubble.appendChild(timestamp);
+                    }
                 }
-                messagesList.appendChild(bubble); messagesList.scrollTop = messagesList.scrollHeight;
+                messagesList.appendChild(bubble);
+                if (scrollToLatest) messagesList.scrollTop = messagesList.scrollHeight;
                 return bubble;
             };
             const draftKey = (matchId) => `niche-draft:${currentUser?.id ?? 'guest'}:${matchId}`;
@@ -501,14 +667,42 @@
                     await fetch(`/api/messages/${message.id}/read`, { method: 'POST', headers: headers(), credentials: 'same-origin' });
                 } catch (error) { console.error('Unable to mark message as read.', error); }
             };
+            const prependMessages = (messages) => {
+                const previousHeight = messagesList.scrollHeight;
+                messages.forEach((message) => {
+                    const bubble = appendMessage(message, message.sender_id === currentUser?.id, { scrollToLatest: false });
+                    messagesList.prepend(bubble);
+                    markAsRead(message);
+                });
+                messagesList.scrollTop = messagesList.scrollHeight - previousHeight;
+            };
+            const loadOlderMessages = async () => {
+                if (!messageNextPage || loadingOlderMessages || !activeMatch) return;
+                loadingOlderMessages = true;
+                const matchId = activeMatch.id;
+                try {
+                    const response = await fetch(messageNextPage, { headers: headers(), credentials: 'same-origin' });
+                    if (!response.ok) return;
+                    const payload = await response.json();
+                    if (activeMatch?.id !== matchId) return;
+                    const older = Array.isArray(payload.data) ? payload.data : [];
+                    prependMessages(older);
+                    messageNextPage = payload.links?.next ?? null;
+                } catch (error) { console.error('Unable to load older messages.', error); }
+                finally { loadingOlderMessages = false; }
+            };
             const selectMatch = async (profile) => {
                 activeMatch = profile;
+                unreadMatchIds.delete(profile.id);
+                updateUnreadIndicator();
+                persistUnreadMatches();
                 activeChatName.textContent = profile.username;
                 activeChatAvatar.textContent = profile.username.charAt(0).toUpperCase();
                 renderActiveMatches(); messagesList.replaceChildren();
                 chatInput.value = localStorage.getItem(draftKey(profile.id)) ?? '';
+                messageNextPage = null;
                 try {
-                    const response = await fetch(`/api/messages/${profile.id}`, { headers: headers(), credentials: 'same-origin' });
+                    const response = await fetch(`/api/messages/${profile.id}?order=desc`, { headers: headers(), credentials: 'same-origin' });
                     if (!response.ok) return;
                     const payload = await response.json();
                     const messages = Array.isArray(payload.data) ? payload.data : [];
@@ -520,12 +714,36 @@
                         messagesList.appendChild(starter);
                         return;
                     }
-                    messages.forEach((message) => {
+                    messageNextPage = payload.links?.next ?? null;
+                    [...messages].reverse().forEach((message) => {
                         appendMessage(message, message.sender_id === currentUser?.id);
                         markAsRead(message);
                     });
                 } catch (error) { console.error('Unable to load conversation.', error); }
             };
+            const closeProfileSheet = () => {
+                connectionSheet.classList.add('hidden');
+                connectionSheet.classList.remove('flex');
+                activeChatAvatar.focus();
+            };
+            activeChatAvatar.addEventListener('click', () => {
+                if (!activeMatch) return;
+                document.getElementById('connection-sheet-avatar').textContent = activeMatch.username.charAt(0).toUpperCase();
+                document.getElementById('connection-sheet-name').textContent = activeMatch.username;
+                document.getElementById('connection-sheet-location').textContent = activeMatch.location || 'Location not shared';
+                document.getElementById('connection-sheet-bio').textContent = activeMatch.bio || 'No bio shared yet.';
+                connectionSheet.classList.remove('hidden');
+                connectionSheet.classList.add('flex');
+                closeConnectionSheet.focus();
+            });
+            closeConnectionSheet.addEventListener('click', closeProfileSheet);
+            connectionSheet.addEventListener('click', (event) => { if (event.target === connectionSheet) closeProfileSheet(); });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !connectionSheet.classList.contains('hidden')) closeProfileSheet();
+            });
+            messagesList.addEventListener('scroll', () => {
+                if (messagesList.scrollTop < 24) loadOlderMessages();
+            });
             const openMatchOverlay = (profile) => {
                 if (currentUser) rememberMutual(profile);
                 if (!matches.some((match) => match.id === profile.id)) matches.push(profile);
@@ -575,6 +793,9 @@
                         appendMessage(message, message.sender_id === currentUser?.id);
                         markAsRead(message);
                     } else if (message.receiver_id === currentUser?.id) {
+                        unreadMatchIds.add(message.sender_id);
+                        updateUnreadIndicator();
+                        persistUnreadMatches();
                         toast('You have a new message.', 'success');
                         haptic([8, 25, 8]);
                     }
@@ -584,6 +805,7 @@
                 currentUser = user;
                 document.getElementById('profile-name').textContent = currentUser.username;
                 document.getElementById('profile-location').textContent = currentUser.location || 'Location not shared';
+                document.getElementById('profile-bio-summary').textContent = currentUser.bio || 'Add a short bio to help people understand what makes you, you.';
                 document.getElementById('current-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
                 const profileAvatar = document.getElementById('profile-avatar');
                 profileAvatar.textContent = currentUser.username.charAt(0).toUpperCase();
@@ -602,6 +824,21 @@
                 const complete = profileFields.filter((field) => Boolean(currentUser[field])).length;
                 document.getElementById('profile-completion').textContent = `${Math.round((complete / profileFields.length) * 100)}%`;
                 document.getElementById('profile-match-count').textContent = String(matches.length);
+                document.getElementById('profile-readiness-badge').textContent = complete === profileFields.length ? 'All set' : `${profileFields.length - complete} to go`;
+                const readinessList = document.getElementById('profile-readiness-list');
+                readinessList.replaceChildren();
+                [
+                    ['profile_photo_url', 'Add a profile photo'],
+                    ['bio', 'Write a short bio'],
+                    ['birth_date', 'Add your birth date'],
+                    ['gender', 'Add your gender'],
+                ].forEach(([field, label]) => {
+                    const item = document.createElement('li');
+                    const done = Boolean(currentUser[field]);
+                    item.className = `flex items-center gap-3 rounded-xl px-3 py-2 ${done ? 'bg-emerald-400/5 text-emerald-200' : 'bg-slate-950/60 text-slate-300'}`;
+                    item.innerHTML = `<span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${done ? 'bg-emerald-400 text-slate-950' : 'border border-slate-600 text-slate-500'}">${done ? '✓' : '•'}</span><span>${label}</span>`;
+                    readinessList.appendChild(item);
+                });
             };
             const loadProfile = async () => {
                 if (!token) return;
@@ -610,6 +847,7 @@
                     if (!response.ok) return;
                     const payload = await response.json();
                     updateProfileSummary(payload.data ?? payload);
+                    restoreUnreadMatches();
                     subscribeToReverb(currentUser.id);
                     loadMatches();
                 } catch (error) { console.error('Unable to load profile.', error); }
@@ -692,6 +930,8 @@
                 try {
                     await fetch('/api/logout', { method: 'POST', headers: headers(), credentials: 'same-origin' });
                 } finally {
+                    sessionStorage.removeItem(discoveryCacheKey());
+                    sessionStorage.removeItem(unreadStorageKey());
                     localStorage.removeItem('auth_token');
                     window.location.reload();
                 }
